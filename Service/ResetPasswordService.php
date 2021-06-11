@@ -20,7 +20,12 @@ class ResetPasswordService
         $this->mailer = $mailer;
     }
 
-    public function sendResetLinkByEmail($email, $messageCode = null)
+    public function sendResetLinkByEmail(
+        $email,
+        $messageCode = null,
+        $additionalParameters = [],
+        $tokenTimeToLive = null
+    )
     {
         $customer = CustomerQuery::create()
             ->filterByEmail($email)
@@ -34,25 +39,34 @@ class ResetPasswordService
             $messageCode = ResetPassword::RESET_PASSWORD_MESSAGE_NAME;
         }
 
-        $tokenLink = $this->generateResetTokenLink($customer);
+        $tokenLink = $this->generateResetTokenLink($customer, $tokenTimeToLive);
         $this->mailer->sendEmailToCustomer(
             $messageCode,
             $customer,
-            [
-                'tokenLink' => $tokenLink,
-                'tokenTimeToLive' => ResetPassword::getTokenTimeToLive()
-            ]
+            array_merge(
+                [
+                    'tokenLink' => $tokenLink,
+                    'tokenTimeToLive' => ResetPassword::getTokenTimeToLive()
+                ],
+                $additionalParameters
+            )
         );
     }
 
-    public function generateResetTokenLink(Customer $customer)
+    public function generateResetTokenLink(Customer $customer, $tokenTimeToLive = null)
     {
         $token = bin2hex(random_bytes(ResetPassword::getTokenLength()));
+
+        if (null === $tokenTimeToLive) {
+            $tokenTimeToLive = ResetPassword::getTokenTimeToLive();
+        }
+
+        $endOfLife = $tokenTimeToLive > -1 ? (new \DateTime())->add((new \DateInterval("PT".ResetPassword::getTokenTimeToLive()."S"))) : null;
 
         $passwordResetToken = (new PasswordResetToken())
             ->setCustomerId($customer->getId())
             ->setToken($token)
-            ->setEndOfLife((new \DateTime())->add((new \DateInterval("PT".ResetPassword::getTokenTimeToLive()."S"))));
+            ->setEndOfLife($endOfLife);
 
         $passwordResetToken->save();
 
@@ -99,7 +113,7 @@ class ResetPasswordService
             throw new \Exception(Translator::getInstance()->trans("This token is invalid or doesn't match your email", [], ResetPassword::DOMAIN_NAME));
         }
 
-        if ((new \DateTime()) > $passwordResetToken->getEndOfLife()) {
+        if (null !== $passwordResetToken->getEndOfLife() && (new \DateTime()) > $passwordResetToken->getEndOfLife()) {
             throw new \Exception(Translator::getInstance()->trans("This token has expired", [], ResetPassword::DOMAIN_NAME));
         }
 
