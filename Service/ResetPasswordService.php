@@ -45,6 +45,7 @@ class ResetPasswordService
             $customer,
             array_merge(
                 [
+                    'customerId' => $customer->getId(),
                     'tokenLink' => $tokenLink,
                     'tokenTimeToLive' => ResetPassword::getTokenTimeToLive()
                 ],
@@ -70,7 +71,7 @@ class ResetPasswordService
 
         $passwordResetToken->save();
 
-        return URL::getInstance()->absoluteUrl("/reset_password")."?token=$token&email=".$customer->getEmail();
+        return URL::getInstance()->absoluteUrl("/reset_password")."?token=$token&email=".urlencode($customer->getEmail());
     }
 
     public function checkTokenAndUpdatePassword($email, $token, $newPassword)
