@@ -2,6 +2,7 @@
 
 namespace ResetPassword\Service;
 
+use ResetPassword\Model\CustomerForbiddenPasswordQuery;
 use ResetPassword\Model\PasswordResetToken;
 use ResetPassword\Model\PasswordResetTokenQuery;
 use ResetPassword\ResetPassword;
@@ -85,6 +86,17 @@ class ResetPasswordService
         }
 
         $tokenModel = $this->checkToken($token, null, $customer);
+
+        $passwordHash = password_hash($newPassword, \PASSWORD_BCRYPT);
+
+        $forbiddenPassword = CustomerForbiddenPasswordQuery::create()
+            ->filterById($customer->getId())
+            ->filterByPassword($passwordHash)
+            ->findOne();
+
+        if (null !== $forbiddenPassword) {
+            throw new \Exception(Translator::getInstance()->trans("Please use a different password than the previous ones.", [], ResetPassword::DOMAIN_NAME));
+        }
 
         $customer->setPassword($newPassword)
             ->save();

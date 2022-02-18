@@ -34,5 +34,15 @@
       <behavior name="timestampable" />
     </table>
 
+    <table name="customer_forbidden_password" namespace="ResetPassword\Model">
+      <column name="id" primaryKey="true" required="true" type="INTEGER" autoIncrement="true" />
+      <column name="customer_id" required="true" type="INTEGER" />
+      <column name="password" required="true" size="255" type="VARCHAR" />
+
+      <foreign-key foreignTable="customer" name="fk_customer_forbidden_password_customer_id" onDelete="CASCADE" onUpdate="RESTRICT">
+        <reference foreign="id" local="customer_id" />
+      </foreign-key>
+    </table>
+
   <external-schema filename="local/config/schema.xml" referenceOnly="true"/>
 </database>
