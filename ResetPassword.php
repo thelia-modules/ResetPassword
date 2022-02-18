@@ -81,6 +81,13 @@ class ResetPassword extends BaseModule
 
     protected function generateEmailMessage(): void
     {
+        // In case translator has not been instancied
+        try {
+            Translator::getInstance();
+        } catch (\Exception $e) {
+            new Translator($this->getContainer()->get('request_stack'));
+        }
+        
         if (null === MessageQuery::create()->findOneByName(self::RESET_PASSWORD_MESSAGE_NAME)) {
             $message = new Message();
             $message
