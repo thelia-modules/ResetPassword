@@ -5,8 +5,9 @@ namespace ResetPassword;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ServicesConfigurator;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Thelia\Core\Translation\Translator;
-use Thelia\Install\Database;
+use Thelia\Core\Install\Database;
 use Thelia\Model\Message;
 use Thelia\Model\LangQuery;
 use Thelia\Model\MessageQuery;
@@ -69,12 +70,12 @@ class ResetPassword extends BaseModule
             ->autoconfigure(true);
     }
 
-    public static function getTokenLength()
+    public static function getTokenLength(): string
     {
         return self::getConfigValue(self::TOKEN_LENGTH_CONFIG_KEY, 32);
     }
 
-    public static function getTokenTimeToLive()
+    public static function getTokenTimeToLive(): string
     {
         return self::getConfigValue(self::TOKEN_TIME_TO_LIVE_KEY, 86400);
     }
@@ -85,7 +86,9 @@ class ResetPassword extends BaseModule
         try {
             Translator::getInstance();
         } catch (\Exception $e) {
-            new Translator($this->getContainer()->get('request_stack'));
+            /** @var RequestStack $requestStack */
+            $requestStack = $this->getContainer()->get('request_stack');
+            new Translator($requestStack);
         }
         
         if (null === MessageQuery::create()->findOneByName(self::RESET_PASSWORD_MESSAGE_NAME)) {
