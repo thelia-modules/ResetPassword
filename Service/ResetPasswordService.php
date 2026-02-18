@@ -2,10 +2,12 @@
 
 namespace ResetPassword\Service;
 
+use ResetPassword\Event\PasswordResetSuccessEvent;
 use ResetPassword\Model\CustomerForbiddenPasswordQuery;
 use ResetPassword\Model\PasswordResetToken;
 use ResetPassword\Model\PasswordResetTokenQuery;
 use ResetPassword\ResetPassword;
+use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 use Thelia\Core\Translation\Translator;
 use Thelia\Mailer\MailerFactory;
 use Thelia\Model\Customer;
@@ -16,8 +18,10 @@ class ResetPasswordService
 {
     protected $mailer;
 
-    public function __construct(MailerFactory $mailer)
-    {
+    public function __construct(
+        MailerFactory $mailer,
+        private readonly EventDispatcherInterface $eventDispatcher,
+    ) {
         $this->mailer = $mailer;
     }
 
@@ -102,6 +106,12 @@ class ResetPasswordService
             ->save();
 
         $tokenModel->delete();
+
+        $this->eventDispatcher->dispatch(
+            new PasswordResetSuccessEvent($customer),
+            PasswordResetSuccessEvent::NAME,
+        );
+
         return $customer;
     }
 
