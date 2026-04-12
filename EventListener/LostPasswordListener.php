@@ -30,7 +30,7 @@ class LostPasswordListener extends BaseAction implements EventSubscriberInterfac
     /**
      * {@inheritdoc}
      */
-    public static function getSubscribedEvents()
+    public static function getSubscribedEvents(): array
     {
         return [
             TheliaEvents::LOST_PASSWORD => ['sendResetLink', 256],

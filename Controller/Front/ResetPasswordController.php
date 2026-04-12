@@ -6,26 +6,20 @@ namespace ResetPassword\Controller\Front;
 use ResetPassword\Form\Front\ResetPasswordAskForm;
 use ResetPassword\Form\Front\ResetPasswordForm;
 use ResetPassword\Service\ResetPasswordService;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Thelia\Controller\Front\BaseFrontController;
 use Thelia\Core\Template\ParserContext;
 
-/**
- * @Route("/reset_password", name="reset_password")
- */
+#[Route("/reset_password", name: "reset_password")]
 class ResetPasswordController extends BaseFrontController
 {
-    /**
-     * @Route("", name="_view", methods="GET")
-     */
+    #[Route("", name: "_view", methods: ["GET"])]
     public function resetPasswordView()
     {
         return $this->render("resetPassword/reset_password");
     }
 
-    /**
-     * @Route("", name="_action", methods="POST")
-     */
+    #[Route("", name: "_action", methods: ["POST"])]
     public function resetPasswordAction(
         ParserContext $parserContext,
         ResetPasswordService $resetPasswordService
