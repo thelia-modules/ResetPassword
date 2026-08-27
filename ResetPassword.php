@@ -12,9 +12,12 @@ use Thelia\Model\Message;
 use Thelia\Model\LangQuery;
 use Thelia\Model\MessageQuery;
 use Thelia\Module\BaseModule;
+use Thelia\Tools\Version\Version;
 
 class ResetPassword extends BaseModule
 {
+    const UNSUPPORTED_CORE_MESSAGE = 'Thelia 3 ships this behaviour natively; this module is for Thelia 2 only. On Thelia 2, require thelia/reset-password-module ^1.0.';
+
     /** @var string */
     const DOMAIN_NAME = 'resetpassword';
 
@@ -23,6 +26,23 @@ class ResetPassword extends BaseModule
 
     const RESET_PASSWORD_MESSAGE_NAME = "reset_password_message";
     const RESET_ALL_PASSWORD_MESSAGE_NAME = "reset_all_password_message";
+
+    /**
+     * Thelia 3 sends a signed password reset link on its own, and this module answers
+     * TheliaEvents::LOST_PASSWORD with a higher priority then stops the propagation:
+     * activating it on a Thelia 3 core would replace the native flow with this one.
+     *
+     * Returning false would surface the core's generic "An error occured during the
+     * module pre activation." message, so throw to let the reason reach the user.
+     */
+    public function preActivation(?ConnectionInterface $con = null): bool
+    {
+        if ((int) Version::parse()['major'] >= 3) {
+            throw new \RuntimeException(self::UNSUPPORTED_CORE_MESSAGE);
+        }
+
+        return true;
+    }
 
     public function postActivation(ConnectionInterface $con = null): void
     {
