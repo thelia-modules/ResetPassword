@@ -11,9 +11,12 @@ use Thelia\Model\Message;
 use Thelia\Model\LangQuery;
 use Thelia\Model\MessageQuery;
 use Thelia\Module\BaseModule;
+use Thelia\Tools\Version\Version;
 
 class ResetPassword extends BaseModule
 {
+    const UNSUPPORTED_CORE_MESSAGE = 'Thelia 3 ships this behaviour natively; this module is for Thelia 2 only.';
+
     /** @var string */
     const DOMAIN_NAME = 'resetpassword';
 
@@ -22,6 +25,23 @@ class ResetPassword extends BaseModule
 
     const RESET_PASSWORD_MESSAGE_NAME = "reset_password_message";
     const RESET_ALL_PASSWORD_MESSAGE_NAME = "reset_all_password_message";
+
+    /**
+     * The <thelia> range in Config/module.xml already keeps the module off a Thelia 3
+     * core, but the activation that follows a module archive install runs with the
+     * check disabled, so guard the lifecycle too.
+     *
+     * Returning false would surface the core's generic "An error occured during the
+     * module pre activation." message, so throw to let the reason reach the user.
+     */
+    public function preActivation(?ConnectionInterface $con = null): bool
+    {
+        if ((int) Version::parse()['major'] >= 3) {
+            throw new \RuntimeException(self::UNSUPPORTED_CORE_MESSAGE);
+        }
+
+        return true;
+    }
 
     public function postActivation(ConnectionInterface $con = null): void
     {
